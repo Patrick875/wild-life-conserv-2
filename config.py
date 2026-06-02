@@ -6,10 +6,14 @@ load_dotenv()
 class Config():
     PORT=os.getenv('PORT',4800)
     FLASK_DEBUG=True
-    SECRET_KEY=os.getenv('SECRET_KEY')
-    JWT_SECRET_KEY=os.getenv('JWT_SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI')
-    JWT_TOKEN_LOCATION =os.getenv('JWT_TOKEN_LOCATION')
+    SECRET_KEY = os.getenv('SECRET_KEY')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
+    if SQLALCHEMY_DATABASE_URI and 'postgresql.pyscopy2' in SQLALCHEMY_DATABASE_URI:
+        raise RuntimeError(
+            "Invalid SQLALCHEMY_DATABASE_URI: use 'postgresql+psycopg2://...' not 'postgresql.pyscopy2://...'."
+        )
+    JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')
     JWT_COOKIE_SECURE = False 
     JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE')
