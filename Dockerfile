@@ -10,4 +10,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["sh","-c","gunicorn -c gunicorn_config.py run:app --log-level debug"]
+CMD ["sh","-c","python3 database/seeders/seed.py && gunicorn -c gunicorn_config.py run:app --log-level debug"]

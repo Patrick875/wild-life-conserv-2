@@ -9,9 +9,11 @@ class Config():
     SECRET_KEY = os.getenv('SECRET_KEY')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
-    if SQLALCHEMY_DATABASE_URI and 'postgresql.pyscopy2' in SQLALCHEMY_DATABASE_URI:
-        raise RuntimeError(
-            "Invalid SQLALCHEMY_DATABASE_URI: use 'postgresql+psycopg2://...' not 'postgresql.pyscopy2://...'."
+    if SQLALCHEMY_DATABASE_URI:
+        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+            'postgresql.pyscopg2', 'postgresql+psycopg2'
+        ).replace(
+            'postgresql.pyscopy2', 'postgresql+psycopg2'
         )
     JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')

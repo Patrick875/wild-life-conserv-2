@@ -5,5 +5,5 @@ def run_seeders():
     seed_roles_and_permissions()
     seed_admin_user()
 
-if __name__=="main":
+if __name__ == "__main__":
     run_seeders()
