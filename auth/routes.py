@@ -8,7 +8,7 @@ from utils.api_response import api_response
 auth_bp = Blueprint("auth_bp", __name__)
 
 @auth_bp.route("/login", methods=["POST"])
-def login_user():
+def login():
     try:
         data = LoginSchema().load(request.get_json())
 
