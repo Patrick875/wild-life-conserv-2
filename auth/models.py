@@ -19,6 +19,13 @@ class Role(BaseModel):
         secondary=roles_permissions,
         back_populates="roles"
     )
+    def to_dict(self):
+        return {
+            "id":self.id,
+            "name":self.name,
+            "description":self.description,
+            "permissions":[permission.name for permission in self.permissions]
+        }
 
 class Permission(BaseModel):
     __tablename__="permissions"
@@ -30,3 +37,9 @@ class Permission(BaseModel):
         back_populates='permissions'
 
     )
+    def to_dict(self):
+        return {
+            "id":self.id,
+            "name":self.name,
+            "description":self.description
+        }

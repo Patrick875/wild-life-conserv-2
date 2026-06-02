@@ -15,6 +15,14 @@ class Config():
         ).replace(
             'postgresql.pyscopy2', 'postgresql+psycopg2'
         )
+        if 'sslmode=' not in SQLALCHEMY_DATABASE_URI:
+            sep = '&' if '?' in SQLALCHEMY_DATABASE_URI else '?'
+            SQLALCHEMY_DATABASE_URI += f'{sep}sslmode=require'
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'connect_args': {
+            'sslmode': 'require'
+        }
+    }
     JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')
     JWT_COOKIE_SECURE = False 
