@@ -1,13 +1,13 @@
-from python:3.11-slim
+FROM python:3.11-slim
 
-workdir ./app
+WORKDIR /app
 
-copy requirements.txt .
+COPY requirements.txt .
 
-run pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-copy . .
+COPY . .
 
-expose 4800
+EXPOSE 8080
 
-cmd ["gunicorn","-b","0.0.0.0:4800","run:app"]
+CMD ["sh","-c","gunicorn -c gunicorn_config.py run:app"]
