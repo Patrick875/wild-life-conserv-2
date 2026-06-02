@@ -12,7 +12,7 @@ class BaseModel(db.Model):
         nullable=False)
     
     updated_at=db.Column(
-        db.DateTime(timezone=True), 
+         db.BigInteger,
         default=lambda: int(time.time()),
         onupdate=lambda: int(time.time()),
         nullable=False)
