@@ -27,7 +27,7 @@ def upgrade():
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     with op.batch_alter_table('form_templates', schema=None) as batch_op:
@@ -38,7 +38,7 @@ def upgrade():
     sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('roles',
@@ -46,7 +46,7 @@ def upgrade():
     sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('sync_logs',
@@ -61,7 +61,7 @@ def upgrade():
     sa.Column('duration_seconds', sa.Float(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('roles_permissions',
@@ -89,7 +89,7 @@ def upgrade():
     sa.Column('last_login', sa.DateTime(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.ForeignKeyConstraint(['role_id'], ['roles.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -117,7 +117,7 @@ def upgrade():
     sa.Column('sync_error', sa.Text(), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.ForeignKeyConstraint(['form_template_id'], ['form_templates.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -134,7 +134,7 @@ def upgrade():
     sa.Column('upload_status', sa.String(length=50), nullable=True),
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.BigInteger(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.BigInteger(), nullable=False),
     sa.ForeignKeyConstraint(['submission_id'], ['form_submissions.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
