@@ -17,7 +17,7 @@ class Role(BaseModel):
     permissions=db.relationship(
         "Permission",
         secondary=roles_permissions,
-        back_populates="role"
+        back_populates="roles"
     )
 
 class Permission(BaseModel):
