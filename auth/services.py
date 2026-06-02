@@ -10,7 +10,7 @@ def login(data:dict):
     password=data["password"]
 
     user= User.query.filter(or_(User.email==identifier,User.phone_number==identifier)).first()
-    if not user or not check_password_hash(user.password,password):
+    if not user or not check_password_hash(user.password_hash,password):
         raise ValueError("Invalid username and password")
     
     token=create_access_token(identity=user.id,additional_claims={
