@@ -19,12 +19,14 @@ def api_response(
     errors=None,
     status_code: int = 200
 ):
-    response = {
+    response={
         "success": success,
         "message": message,
-        "data": _serialize_value(data),
-        "errors": _serialize_value(errors),
         "timestamp": int(time.time())
     }
+    if data is not None:
+        response["data"]=data
+    if errors is not None:
+        response["errors"]=errors
 
     return jsonify(response), status_code

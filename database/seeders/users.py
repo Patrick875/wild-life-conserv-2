@@ -29,7 +29,7 @@ def seed_admin_user():
             occupation="Administrator",
             organization="Wildlife Conservation Platform",
             role_id=admin_role.id,
-            password_hash=generate_password_hash("Admin@12345"),
+            passxword_hash=generate_password_hash("Admin@12345"),
             is_verified=True,
             is_active=True,
         )

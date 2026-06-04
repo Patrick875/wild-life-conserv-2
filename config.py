@@ -9,20 +9,20 @@ class Config():
     SECRET_KEY = os.getenv('SECRET_KEY')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
-    if SQLALCHEMY_DATABASE_URI:
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
-            'postgresql.pyscopg2', 'postgresql+psycopg2'
-        ).replace(
-            'postgresql.pyscopy2', 'postgresql+psycopg2'
-        )
-        if 'sslmode=' not in SQLALCHEMY_DATABASE_URI:
-            sep = '&' if '?' in SQLALCHEMY_DATABASE_URI else '?'
-            SQLALCHEMY_DATABASE_URI += f'{sep}sslmode=require'
-    SQLALCHEMY_ENGINE_OPTIONS = {
-        'connect_args': {
-            'sslmode': 'require'
-        }
-    }
+    # if SQLALCHEMY_DATABASE_URI:
+    #     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+    #         'postgresql.pyscopg2', 'postgresql+psycopg2'
+    #     ).replace(
+    #         'postgresql.pyscopy2', 'postgresql+psycopg2'
+    #     )
+    #     if 'sslmode=' not in SQLALCHEMY_DATABASE_URI and os.getenv('DATABASE_SSL') == 'true':
+    #         sep = '&' if '?' in SQLALCHEMY_DATABASE_URI else '?'
+    #         SQLALCHEMY_DATABASE_URI += f'{sep}sslmode=require'
+    # SQLALCHEMY_ENGINE_OPTIONS = {
+    #     'connect_args': {
+    #         'sslmode': 'require'
+    #     }
+    # }
     JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')
     JWT_COOKIE_SECURE = False 

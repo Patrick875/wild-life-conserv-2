@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from utils.api_response import api_response
 from datetime import datetime,timezone
+from xml.etree.ElementTree import Element, SubElement, tostring
+import uuid
 
 load_dotenv()
 
@@ -206,15 +208,17 @@ def get_form_submissions(
         """Get submissions for a specific form"""
         try:
             params = {
-                "limit": limit,
-                "start": start,
-                "sort": sort,
+                # "limit": limit,
+                # "start": start,
+                # "sort": sort,
                 "format": "json"
             }
             
             
-            response=requests.get(KOBO_BASE_URL+"/api/v2/assets/"+form_uid,headers=headers,timeout=kobo_timeout,params=params)
-            submissions = response.json().get("results", [])
+            response=requests.get(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/data",headers=headers,timeout=kobo_timeout)
+            print('submissions',response.json())
+            # submissions = response.json().get("results", [])
+            submissions = response.json()
             # logger.info(f"Retrieved {len(submissions)} submissions for form {form_uid}")
             
             return {
@@ -228,32 +232,270 @@ def get_form_submissions(
             raise ValueError(f"Failed to get submissions for form {form_uid}: {e}")
             
     
-def submit_data( 
-        form_uid: str, 
-        submission_data: dict
-    ) :
-        """Submit data to a Kobo form"""
-        try:
-            # Prepare submission data in Kobo format
-            kobo_submission = {
-                "submission": submission_data,
-                "meta/instanceID": f"uuid:{submission_data.get('_uuid', '')}",
-                "meta/submissionTime": datetime.now(timezone.utc).isoformat(),
-            }
+# def submit_warning( 
+#         form_uuid: str, 
+#         submission_data: dict
+#     ) :
+#         """Submit data to a Kobo form"""
+#         try:
+#             # Prepare submission data in Kobo format
+#             kobo_submission = {
+#                 "submission": submission_data,
+#                 "meta/instanceID": f"uuid:{submission_data.get('_uuid', '')}",
+#                 "meta/submissionTime": datetime.now(timezone.utc).isoformat(),
+#             }
             
-            # response = make_kobo_request(
-            #     "POST",
-            #     f"/api/v2/assets/{form_uid}/submissions/",
-            #     data=kobo_submission
-            # )
-            response=requests.post(KOBO_BASE_URL+"/api/v2/assets/"+form_uid,headers=headers,timeout=kobo_timeout,data=kobo_submission)
-            # logger.info(f"Successfully submitted data to form {form_uid}")
-            return response.json()
+#             # response = make_kobo_request(
+#             #     "POST",
+#             #     f"/api/v2/assets/{form_uid}/submissions/",
+#             #     data=kobo_submission
+#             # )
+#             print('kobo_submission',kobo_submission)
+#             response=requests.post(KOBO_BASE_URL+"/api/v2/assets/"+form_uuid,headers=headers,timeout=kobo_timeout,data=kobo_submission)
+#             # logger.info(f"Successfully submitted data to form {form_uid}")
+#             return response.json()
             
-        except Exception as e:
-            raise ValueError(f"Failed to submit data to form {form_uid}: {e}")
+#         except Exception as e:
+#             raise ValueError(f"Failed to submit data to form {form_uuid}: {e}")
             
     
+# def normalize_value(value):
+#     if isinstance(value, dict) and "latitude" in value and "longitude" in value:
+#         # Kobo geopoint format: lat lon altitude accuracy
+#         return f"{value['latitude']} {value['longitude']} 0 0"
+
+#     if isinstance(value, list):
+#         # select_multiple values are space-separated in Kobo XML
+#         return " ".join(map(str, value))
+
+#     return "" if value is None else str(value)
+
+# def normalize_value(value) -> str:
+#     """Converts values to strings, handling Kobo geopoint objects explicitly."""
+#     if isinstance(value, dict):
+#         # Check if the dictionary represents a GPS coordinate object
+#         if 'latitude' in value and 'longitude' in value:
+#             lat = value.get('latitude')
+#             lng = value.get('longitude')
+#             alt = value.get('altitude', 0)
+#             acc = value.get('accuracy', 0)
+#             return f"{lat} {lng} {alt} {acc}"
+#         return str(value)
+#     if value is None:
+#         return ""
+#     if isinstance(value, bool):
+#         return str(value).lower() # Kobo expects 'true' or 'false'
+#     return str(value)
+
+# def add_field(parent, key, value):
+#     # Supports grouped keys like "group_name/field_name"
+#     parts = key.split("/")
+#     current = parent
+
+#     for part in parts[:-1]:
+#         child = current.find(part)
+#         if child is None:
+#             child = SubElement(current, part)
+#         current = child
+
+#     tag_name = parts[-1]
+
+#     # RECURSIVE FIX: If value is a dictionary and NOT a geopoint, process it as sub-fields
+#     if isinstance(value, dict) and not ('latitude' in value and 'longitude' in value):
+#         group_node = current.find(tag_name)
+#         if group_node is None:
+#             group_node = SubElement(current, tag_name)
+#         for sub_key, sub_value in value.items():
+#             add_field(group_node, sub_key, sub_value)
+#     else:
+#         # Standard field or a flattened geopoint string
+#         field = SubElement(current, tag_name)
+#         field.text = normalize_value(value)
+
+# def build_kobo_xml(xml_form_id: str, submission_data: dict) -> bytes:
+#     # Kobo forms require the version attribute if your XLSForm has one. 
+#     # Added fallback to prevent schema validation drops.
+#     version = submission_data.get("__version__") or submission_data.get("_version", "")
+    
+#     root_attrs = {"id": xml_form_id}
+#     if version:
+#         root_attrs["version"] = str(version)
+        
+#     root = Element("data", root_attrs)
+
+#     # Filter out Kobo's read-only system metadata keys
+#     system_keys_to_skip = [
+#         "_id", "_uuid", "_submission_time", "_status", "_tags", 
+#         "_notes", "_validation_status", "_submitted_by", "__version__", "_version"
+#     ]
+
+#     for key, value in submission_data.items():
+#         if key in system_keys_to_skip:
+#             continue
+#         add_field(root, key, value)
+
+#     # Build meta block correctly
+#     meta = SubElement(root, "meta")
+#     instance_id = SubElement(meta, "instanceID")
+    
+#     # Extract existing UUID or fall back to creating a new one
+#     raw_uuid = submission_data.get("_uuid") or submission_data.get("meta/instanceID") or str(uuid.uuid4())
+#     if not raw_uuid.startswith("uuid:"):
+#         raw_uuid = f"uuid:{raw_uuid}"
+        
+#     instance_id.text = raw_uuid
+
+#     return tostring(root, encoding="utf-8", xml_declaration=True)
+
+# def submit_warning(xml_form_id: str, submission_data: dict):
+#     xml_bytes = build_kobo_xml(xml_form_id, submission_data)
+
+#     files = {
+#         "xml_submission_file": (
+#             "submission.xml",
+#             xml_bytes,
+#             "text/xml",''
+#         )
+#     }
+#     submit_headers={
+#           "Authorization":headers.get("Authorization")
+#     }
+#     print('files',files)
+#     response = requests.post(
+#         f"{KOBO_BASE_URL}/api/v1/submissions",
+#         headers=submit_headers,
+#         files=files,
+#         timeout=30,
+#     )
+
+#     if not response.ok:
+#         raise ValueError(f"Kobo submit failed: {response.status_code} {response.text}")
+
+#     return response.json() if response.text else {"success": True}
+
+
+
+import uuid
+import requests
+
+def normalize_value(value):
+    """Converts values to their natural Python types for JSON."""
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, dict):
+        if 'latitude' in value and 'longitude' in value:
+            lat = value.get('latitude')
+            lng = value.get('longitude')
+            alt = value.get('altitude', 0)
+            acc = value.get('accuracy', 0)
+            return f"{lat} {lng} {alt} {acc}"
+        return value  # nested dicts stay as-is; build_submission handles them
+    return value  # ints, floats, strings pass through naturally
+
+
+def build_submission_dict(submission_data: dict) -> dict:
+    """
+    Converts a flat/nested submission_data dict into the JSON shape
+    Kobo expects:
+    {
+        "id": "<xml_form_id>",
+        "submission": {
+            "formhub": {"uuid": "<form_uuid>"},
+            "<field>": "<value>",
+            ...groups as nested dicts...,
+            "meta": {"instanceID": "uuid:<uuid>"}
+        }
+    }
+    NOTE: xml_form_id and form_uuid are injected by the caller.
+    """
+    system_keys_to_skip = [
+        "_id", "_uuid", "_submission_time", "_status", "_tags",
+        "_notes", "_validation_status", "_submitted_by",
+        "__version__", "_version"
+    ]
+
+    submission = {}
+
+    for key, value in submission_data.items():
+        if key in system_keys_to_skip:
+            continue
+
+        # Handle slash-separated group paths: "group/field" → nested dict
+        parts = key.split("/")
+        current = submission
+        for part in parts[:-1]:
+            current = current.setdefault(part, {})
+        leaf = parts[-1]
+
+        normalized = normalize_value(value)
+
+        # If the leaf is itself a non-geopoint dict, merge recursively
+        if isinstance(normalized, dict) and not isinstance(value, dict):
+            current[leaf] = normalized
+        else:
+            current[leaf] = normalized
+
+    # Inject meta/instanceID
+    raw_uuid = (
+        submission_data.get("_uuid")
+        or submission_data.get("meta/instanceID")
+        or str(uuid.uuid4())
+    )
+    if not raw_uuid.startswith("uuid:"):
+        raw_uuid = f"uuid:{raw_uuid}"
+
+    submission.setdefault("meta", {})["instanceID"] = raw_uuid
+
+    return submission
+
+
+def submit_warning(form_uuid: str, submission_data: dict):
+    """
+    xml_form_id : the form's id_string  (e.g. "aXxYyZz123")
+                  GET https://kc.kobotoolbox.org/api/v1/forms?format=json
+                  and find  "id_string"  for your form.
+
+    form_uuid   : the form-level UUID   (e.g. "f739945244514a6bb304dc35d6049880")
+                  same endpoint, field  "uuid".
+                  This is NOT the submission UUID — it identifies the form schema.
+    """
+    submission = build_submission_dict(submission_data)
+
+    # Inject formhub/uuid — required by KoboCAT to route the submission
+    submission["formhub"] = {"uuid": form_uuid}
+
+    payload = {
+        "id": form_uuid,
+        "submission": submission,
+    }
+
+    submit_headers = {
+        "Authorization": headers.get("Authorization"),
+        "Content-Type": "application/json",
+    }
+
+    print("payload", payload)
+
+    response = requests.post(
+        f"{KOBO_BASE_URL}/api/v1/submissions",  # must be kc. subdomain, not kf.
+        headers=submit_headers,
+        json=payload,
+        timeout=30,
+    )
+
+    if not response.ok:
+        raise ValueError(
+            f"Kobo submit failed: {response.status_code} {response.text}"
+        )
+
+    return response.json() if response.text else {"success": True}
+
+
+
+
+
 def update_submission(
       
         form_uid: str, 

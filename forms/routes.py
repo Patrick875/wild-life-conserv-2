@@ -67,13 +67,12 @@ def get_submissions_per_form(form_uuid) :
 
 @forms_bp.route('/<form_uuid>/submit_warning',methods=['POST'])   
 def submit_data( 
-        form_uuid: str, 
-        submission_data: dict
-    ) :
-        submission_data=request.get_json()
+        form_uuid: str ) :
+        submission_data=request.json
+        print(submission_data)
         try:
              
-            response = submit_data(form_uuid=form_uuid,submission_data=submission_data)
+            response = submit_warning(form_uuid=form_uuid,submission_data=submission_data)
             
             # logger.info(f"Successfully submitted data to form {form_uid}")
             return api_response(

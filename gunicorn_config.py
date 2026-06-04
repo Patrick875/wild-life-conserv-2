@@ -7,4 +7,4 @@ bind = f"0.0.0.0:{os.getenv('PORT', '8080')}"
 
 forwarded_allow_ips = '*'
 
-secure_scheme_headers = {'X-Forwarded-Proto': 'https'}
+# secure_scheme_headers = {'X-Forwarded-Proto': 'https'}
