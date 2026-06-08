@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from config import Config
 from auth.routes import auth_bp
 from forms.routes import forms_bp
+from media.routes import uploads_bp
 from extensions import db,migrate,jwt
 
 load_dotenv()
@@ -18,6 +19,7 @@ def create_app():
     
     app.register_blueprint(auth_bp,url_prefix=url_prefix+"/auth")
     app.register_blueprint(forms_bp,url_prefix=url_prefix+"/forms")
+    app.register_blueprint(uploads_bp,url_prefix=url_prefix+"/uploads")
 
     import database.models
 

@@ -27,6 +27,7 @@ class User(BaseModel):
     last_login = db.Column(db.DateTime)
 
     submissions = db.relationship("FormSubmission", back_populates="user")
+    uploads=db.relationship("MediaFile",back_populates="user")
 
     def to_dict(self):
         return {
