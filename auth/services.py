@@ -16,7 +16,9 @@ def login(data: dict):
     user_dict=user.to_dict()
 
     return {
-        "access_token": create_access_token(identity=user.id),
+        "access_token": create_access_token(identity=str(user.id),additional_claims={
+            "role":user_dict.get("role")
+        }),
         "user":{
             "fullName":user_dict.get("full_name"),
             "userName":user_dict.get("username"),

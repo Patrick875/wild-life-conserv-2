@@ -53,6 +53,7 @@ ROLE_PERMISSIONS = {
             ("warning:create", "Allows creating warning submissions."),
             ("warning:view:own", "Allows viewing own warning submissions."),
             ("warning:update:own", "Allows updating own warning submissions."),
+             ("warning_feedback:create", "Allows creating feedback on warning submissions."),
             ("warning_feedback:view:own", "Allows viewing feedback on own warning submissions."),
             ("area_warning_feed:view", "Allows viewing active warnings in the user's area."),
         ],

@@ -28,6 +28,8 @@ class User(BaseModel):
 
     submissions = db.relationship("FormSubmission", back_populates="user")
     uploads=db.relationship("MediaFile",back_populates="user")
+    warnings=db.relationship("Warning",back_populates="user")
+    warning_feedbacks=db.relationship("WarningFeedback",back_populates="user")
 
     def to_dict(self):
         return {

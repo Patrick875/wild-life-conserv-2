@@ -1,6 +1,7 @@
 from flask import Blueprint,request
 from forms.services import *
 from utils.api_response import api_response
+from flask_jwt_extended import jwt_required,get_jwt_identity
 forms_bp=Blueprint("forms_bp",__name__)
 
 @forms_bp.route('/',methods=['GET'])
@@ -25,9 +26,7 @@ def get_kobo_forms():
 
 @forms_bp.route('/<uuid>',methods=['GET'])
 def get_form_details(uuid:str):
-    
     try:
-       
         response=get_form_by_uuid(uuid)
         print("form response",response)
         return api_response(
@@ -45,6 +44,7 @@ def get_form_details(uuid:str):
         )
 
 @forms_bp.route('/<form_uuid>/submissions',methods=['GET'])
+@jwt_required(locations=['headers',])
 def get_submissions_per_form(form_uuid) :
         try:
             response = get_form_submissions(form_uuid)
@@ -65,14 +65,38 @@ def get_submissions_per_form(form_uuid) :
             status_code=500
             )
 
+@forms_bp.route('/<form_uuid>/submissions/me',methods=['GET'])
+@jwt_required(locations=['headers',])
+def get_my_submissions(form_uuid):
+    try:    
+            user_id=int(get_jwt_identity())
+            response =  get_submissions_by_user(form_id=form_uuid,user_id=user_id)
+
+            return api_response(
+            success=True,
+            data=response,
+            message='Form submissions by user fetched successfuly',
+         
+            )
+                        
+            
+    except Exception as e:
+            print(e)
+            return api_response(
+            success=False,
+            message='Error fetching submissions',
+            errors=str(e),
+            status_code=500
+            )
+
 @forms_bp.route('/<form_uuid>/submit_warning',methods=['POST'])   
+@jwt_required(locations=['headers','cookies'])
 def submit_data( 
         form_uuid: str ) :
         submission_data=request.json
-        print(submission_data)
         try:
-             
-            response = submit_warning(form_uuid=form_uuid,submission_data=submission_data)
+            user_id=int(get_jwt_identity())
+            response = submit_warning(form_uuid=form_uuid,submission_data=submission_data,user_id=user_id)
             
             # logger.info(f"Successfully submitted data to form {form_uid}")
             return api_response(
@@ -83,14 +107,16 @@ def submit_data(
         )
             
         except Exception as e:
+            print(str(e))
             return api_response(
             success=False,
             message='Error submitting warning',
             errors=str(e),
             status_code=400
             )
-            
+
 @forms_bp.route('/<form_uuid>/submissions/<warn_id>',methods=['PUT'])     
+@jwt_required(locations=['headers'])        
 def update_form_submission(
       
         form_uuid: str, 
@@ -117,7 +143,9 @@ def update_form_submission(
             status_code=400
             )
 
+
 @forms_bp.route('/<form_uuid>/submissions/<warn_id>',methods=['DELETE'])   
+@jwt_required(locations=['headers','cookies'])
 def delete_warn(form_uuid: str, warn_id: str) :
         try:
             
