@@ -30,7 +30,7 @@ class User(BaseModel):
     uploads=db.relationship("MediaFile",back_populates="user")
     warnings=db.relationship("Warning",back_populates="user")
     warning_feedbacks=db.relationship("WarningFeedback",back_populates="user")
-
+    ai_conversations= db.relationship("Conversation",back_populates="user", cascade="all, delete-orphan")
     def to_dict(self):
         return {
             "id": self.id,
@@ -41,6 +41,7 @@ class User(BaseModel):
             "occupation": self.occupation,
             "organization": self.organization,
             "role": self.role.name if self.role else None,
+            "ai_conversations_count":len(self.ai_conversations),
             "is_verified": self.is_verified,
             "is_active": self.is_active,
             "created_at": self.created_at,

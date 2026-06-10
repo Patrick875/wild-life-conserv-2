@@ -42,6 +42,7 @@ def upload_file():
             status_code=200,
         )
     except ValueError as error:
+        print(f"upload error {error}")
         return api_response(
             success=False,
             message=str(error),

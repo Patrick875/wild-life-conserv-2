@@ -7,7 +7,7 @@ import mimetypes
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif","image/heic", "image/heif"}
 ALLOWED_VIDEO_TYPES = {"video/mp4", "video/quicktime", "video/webm"}
 ALLOWED_DOCUMENT_TYPES = {
     "application/pdf",
