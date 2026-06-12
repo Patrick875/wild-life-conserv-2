@@ -34,7 +34,7 @@ def add_feedback(user_id:int,data:dict):
         sender_name=user_data.get('full_name',"Someone")
         if user_id != warning.user_id:
              pusher_client.trigger(
-                  channels=f"private-user-{post_owner_id}",
+                  channels=[f"private-user-{post_owner_id}"],
                   event_name="new-feedback",
                   data={
                        "title":"New feedback!",
