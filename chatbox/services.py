@@ -176,7 +176,7 @@ def send_chat(
             model=model,
             tokens_used=ai_response.get("total_tokens_used", 0),
         )
-
+        
         return {
             "conversation": conversation.to_dict(),
             "user_message": user_message.to_dict(),

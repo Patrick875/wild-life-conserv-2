@@ -73,4 +73,3 @@ def signup():
             status_code=400
         )
 
-    

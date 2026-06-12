@@ -6,6 +6,7 @@ from forms.routes import forms_bp
 from media.routes import uploads_bp
 from chatbox.routes import chatbox_bp
 from warning_feedbacks.routes import feebacks_bp
+from notificaitions.routes import pusher_bp
 from extensions import db,migrate,jwt
 from datetime import timedelta
 
@@ -30,6 +31,7 @@ def create_app():
     app.register_blueprint(uploads_bp,url_prefix=url_prefix+"/uploads")
     app.register_blueprint(feebacks_bp,url_prefix=url_prefix+"/warnings/feedbacks")
     app.register_blueprint(chatbox_bp,url_prefix=url_prefix+"/ai")
+    app.register_blueprint(pusher_bp,url_prefix=url_prefix+"/pusher")
     
     import database.models
 
