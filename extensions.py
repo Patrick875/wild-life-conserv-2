@@ -4,6 +4,13 @@ from flask_jwt_extended import JWTManager
 from flask_mail import Mail
 from dotenv import load_dotenv
 import os 
+import collections
+from collections import abc as collections_abc
+
+if not hasattr(collections, "Sized"):
+    collections.Sized = collections_abc.Sized
+if not hasattr(collections, "Iterable"):
+    collections.Iterable = collections_abc.Iterable
 
 try:
     import pusher
