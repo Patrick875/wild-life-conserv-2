@@ -53,11 +53,11 @@ def add_feedback(user_id:int,data:dict):
                   data=payload
              )
 
-        if user_id != warning.user_id:
-             try:
-                  publish_beams_to_users([post_owner_id], payload)
-             except ValueError:
-                  pass
+        # if user_id != warning.user_id:
+        #      try:
+        #           publish_beams_to_users([post_owner_id], payload)
+        #      except ValueError:
+        #           pass
         
         return feedback.to_dict(include_user=True)
     except ValueError as e:
