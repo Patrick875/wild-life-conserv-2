@@ -5,6 +5,7 @@ from auth.routes import auth_bp
 from forms.routes import forms_bp
 from media.routes import uploads_bp
 from chatbox.routes import chatbox_bp
+from users.routes import users_bp
 from warning_feedbacks.routes import feebacks_bp
 from notificaitions.routes import pusher_bp
 from extensions import db,migrate,jwt
@@ -27,6 +28,7 @@ def create_app():
     
     
     app.register_blueprint(auth_bp,url_prefix=url_prefix+"/auth")
+    app.register_blueprint(users_bp,url_prefix=url_prefix+"/users")
     app.register_blueprint(forms_bp,url_prefix=url_prefix+"/forms")
     app.register_blueprint(uploads_bp,url_prefix=url_prefix+"/uploads")
     app.register_blueprint(feebacks_bp,url_prefix=url_prefix+"/warnings/feedbacks")

@@ -5,12 +5,16 @@ from extensions import pusher_client
 pusher_bp=Blueprint("pusher_bp",__name__)
 
 @pusher_bp.route('/auth',methods=["POST"])
-@jwt_required()
+@jwt_required(locations=["headers"])
 def pusher_authentication():
     current_user_id = get_jwt_identity()
     
     channel_name = request.form.get("channel_name")
     socket_id = request.form.get("socket_id")
+
+    print('I reached here')
+    print(channel_name)
+    print(socket_id)
 
     if not current_user_id:
         return api_response(
@@ -42,6 +46,7 @@ def pusher_authentication():
             socket_id=socket_id
         )
         # Wrap safely inside your custom API standard response
-        return api_response(success=True, data=auth_response, status_code=200) 
+        return api_response(success=True, data=auth_response,message="Pusher user successful", status_code=200) 
     except Exception as e:
+        print('failed with',str(e))
         return api_response(success=False, message=str(e), status_code=500)

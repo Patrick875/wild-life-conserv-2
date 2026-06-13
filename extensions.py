@@ -20,6 +20,3 @@ pusher_client=pusher.Pusher(
     cluster=os.getenv("PUSHER_CHANNELS_CLUSTER"),
     ssl=True
 )
-
-FEEBACK_CHANNEL='feedback_ch'
-WARNING_CHANNEL='warning_ch'
