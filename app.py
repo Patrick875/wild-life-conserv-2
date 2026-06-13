@@ -8,6 +8,7 @@ from chatbox.routes import chatbox_bp
 from users.routes import users_bp
 from warning_feedbacks.routes import feebacks_bp
 from notificaitions.routes import pusher_bp
+from warning.routes import warning_bp
 from extensions import db,migrate,jwt
 from datetime import timedelta
 
@@ -31,6 +32,7 @@ def create_app():
     app.register_blueprint(users_bp,url_prefix=url_prefix+"/users")
     app.register_blueprint(forms_bp,url_prefix=url_prefix+"/forms")
     app.register_blueprint(uploads_bp,url_prefix=url_prefix+"/uploads")
+    app.register_blueprint(warning_bp,url_prefix=url_prefix+"/warnings")
     app.register_blueprint(feebacks_bp,url_prefix=url_prefix+"/warnings/feedbacks")
     app.register_blueprint(chatbox_bp,url_prefix=url_prefix+"/ai")
     app.register_blueprint(pusher_bp,url_prefix=url_prefix+"/pusher")
@@ -38,6 +40,5 @@ def create_app():
     import database.models
 
     return app 
-
 
 

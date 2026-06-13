@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 from forms.helpers import *
 from warning.models import Warning
+from warning_feedbacks.models import WarningFeedback
 from extensions import db
 from sqlalchemy import and_
 
@@ -174,9 +175,18 @@ def update_submission(
             #     f"/api/v2/assets/{form_uid}/submissions/{submission_id}/",
             #     data=submission_data
             # )
-            response=requests.put(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+submission_id,headers=headers,timeout=kobo_timeout,data=submission_data)
+            warning = Warning.query.filter_by(id=submission_id, kobo_form_id=form_uid).first()
+            kobo_submission_id = warning.kobo_submission_id if warning else submission_id
+            response=requests.put(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+kobo_submission_id,headers=headers,timeout=kobo_timeout,json=submission_data)
+            if not response.ok:
+                raise ValueError(response.text)
+
+            if warning:
+                warning.submission_data = submission_data
+                db.session.commit()
+
             # logger.info(f"Successfully updated submission {submission_id}")
-            return response.json()
+            return response.json() if response.text else {"success": response.ok}
             
         except Exception as e:
             raise ValueError(f"Failed to update submission {submission_id}: {e}")
@@ -193,10 +203,19 @@ def delete_submission(
             #     "DELETE",
             #     f"/api/v2/assets/{form_uid}/submissions/{submission_id}/"
             # )
-            requests.delete(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+submission_id,headers=headers,timeout=kobo_timeout)
+            warning = Warning.query.filter_by(id=submission_id, kobo_form_id=form_uid).first()
+            kobo_submission_id = warning.kobo_submission_id if warning else submission_id
+            response = requests.delete(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+kobo_submission_id,headers=headers,timeout=kobo_timeout)
+            if not response.ok:
+                raise ValueError(response.text)
+
+            if warning:
+                WarningFeedback.query.filter_by(warning_id=warning.id).delete()
+                db.session.delete(warning)
+                db.session.commit()
             
             # logger.info(f"Successfully deleted submission {submission_id}")
-            return True
+            return {"success": response.ok}
             
         except Exception as e:
             raise ValueError(f"Failed to delete submission {submission_id}: {e}")

@@ -120,12 +120,15 @@ def submit_data(
 def update_form_submission(
       
         form_uuid: str, 
-        warn_id: str, 
-        submission_data: dict
+        warn_id: str
     ) :
         
         try:
-            response = update_submission(form_uid=form_uuid,submission_id=submission_data,id=warn_id)
+            response = update_submission(
+                form_uid=form_uuid,
+                submission_id=warn_id,
+                submission_data=request.get_json() or {}
+            )
             
             # logger.info(f"Successfully updated submission {submission_id}")
             return api_response(

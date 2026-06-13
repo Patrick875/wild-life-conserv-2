@@ -4,7 +4,16 @@ from flask_jwt_extended import JWTManager
 from flask_mail import Mail
 from dotenv import load_dotenv
 import os 
-import pusher
+
+try:
+    import pusher
+except ImportError:
+    pusher = None
+
+try:
+    import pusher_push_notifications
+except ImportError:
+    pusher_push_notifications = None
 
 load_dotenv()
 
@@ -13,10 +22,19 @@ migrate=Migrate()
 jwt=JWTManager()
 mail=Mail()
 
-pusher_client=pusher.Pusher(
-    app_id=os.getenv("PUSHER_CHANNELS_APP_ID"),
-    key=os.getenv("PUSHER_CHANNELS_KEY"),
-    secret=os.getenv("PUSHER_CHANNELS_SECRET"),
-    cluster=os.getenv("PUSHER_CHANNELS_CLUSTER"),
-    ssl=True
-)
+pusher_client = None
+if pusher:
+    pusher_client = pusher.Pusher(
+        app_id=os.getenv("PUSHER_CHANNELS_APP_ID"),
+        key=os.getenv("PUSHER_CHANNELS_KEY"),
+        secret=os.getenv("PUSHER_CHANNELS_SECRET"),
+        cluster=os.getenv("PUSHER_CHANNELS_CLUSTER"),
+        ssl=True
+    )
+
+beams_client = None
+if pusher_push_notifications and os.getenv("PUSHER_BEAMS_INSTANCE_ID") and os.getenv("PUSHER_BEAMS_SECRET_KEY"):
+    beams_client = pusher_push_notifications.PushNotifications(
+        instance_id=os.getenv("PUSHER_BEAMS_INSTANCE_ID"),
+        secret_key=os.getenv("PUSHER_BEAMS_SECRET_KEY"),
+    )

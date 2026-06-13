@@ -1,5 +1,10 @@
 from flask import Blueprint,request
-from warning_feedbacks.services import add_feedback,get_feedback_per_warning
+from warning_feedbacks.services import (
+    add_feedback,
+    delete_feedback,
+    get_feedback_per_warning,
+    update_feedback,
+)
 from flask_jwt_extended import jwt_required,get_jwt_identity
 from warning_feedbacks.schemas import FeedbackSchema
 from marshmallow import ValidationError
@@ -56,3 +61,47 @@ def get_Warning_feedbacks(warning_id):
             errors=str(e),
             status_code=500
         )
+
+
+@feebacks_bp.route('/items/<int:feedback_id>', methods=['PUT', 'PATCH'])
+@jwt_required(locations=['headers'])
+def update_warning_feedback(feedback_id):
+    try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json() or {}
+        feedback = update_feedback(
+            user_id=user_id,
+            feedback_id=feedback_id,
+            data=data,
+        )
+        return api_response(
+            success=True,
+            message='Warning feedback updated successfully',
+            data=feedback,
+            status_code=200
+        )
+    except PermissionError as e:
+        return api_response(success=False, message=str(e), status_code=403)
+    except ValueError as e:
+        return api_response(success=False, message=str(e), status_code=400)
+    except Exception as e:
+        return api_response(success=False, message=str(e), status_code=500)
+
+
+@feebacks_bp.route('/items/<int:feedback_id>', methods=['DELETE'])
+@jwt_required(locations=['headers'])
+def delete_warning_feedback(feedback_id):
+    try:
+        user_id = int(get_jwt_identity())
+        delete_feedback(user_id=user_id, feedback_id=feedback_id)
+        return api_response(
+            success=True,
+            message='Warning feedback deleted successfully',
+            status_code=200
+        )
+    except PermissionError as e:
+        return api_response(success=False, message=str(e), status_code=403)
+    except ValueError as e:
+        return api_response(success=False, message=str(e), status_code=404)
+    except Exception as e:
+        return api_response(success=False, message=str(e), status_code=500)
