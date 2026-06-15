@@ -190,7 +190,6 @@ def update_submission(
             
         except Exception as e:
             raise ValueError(f"Failed to update submission {submission_id}: {e}")
-            raise
     
 def delete_submission(
    
