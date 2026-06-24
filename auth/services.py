@@ -1,4 +1,4 @@
-from nacl.utils import random
+import secrets
 from users.models import User
 from auth.models import Role
 from flask_jwt_extended import create_access_token,get_jwt_identity,decode_token
@@ -78,8 +78,8 @@ def forgot_password_init(data:dict):
     user=User.query.filter(or_(User.email==identifier,User.phone_number==identifier)).first()
     if not user:
         raise NotFound("User not found")
-    reset_password_otp=str(random.randint(100000,999999))
-    user.reset_password_otp=reset_password_otp
+    reset_password_otp=f"{secrets.randbelow(1_000_000):06d}"
+    user.reset_password_otp=generate_password_hash(reset_password_otp)
     user.reset_password_otp_expires=datetime.utcnow()+timedelta(minutes=10)
     
     send_email(
@@ -91,6 +91,7 @@ def forgot_password_init(data:dict):
             "otp": reset_password_otp
         }
     )
+    db.session.commit()
     return {
         "message":"Password reset OTP sent to your email",
         "expires_at":user.reset_password_otp_expires
@@ -102,15 +103,21 @@ def password_reset_verify(data:dict):
     user=User.query.filter(or_(User.email==identifier,User.phone_number==identifier)).first()
     if not user:
         raise NotFound("User not found")
-    if user.reset_password_otp!=otp:
+    if not user.reset_password_otp or not user.reset_password_otp_expires:
         raise BadRequest("Invalid OTP")
-    if user.reset_password_otp_expires<datetime.utcnow():
+    if user.reset_password_otp_expires < datetime.utcnow():
         raise BadRequest("OTP expired")
+    if not check_password_hash(user.reset_password_otp, otp):
+        raise BadRequest("Invalid OTP")
+
+    user.reset_password_otp = None
+    user.reset_password_otp_expires = None
+    db.session.commit()
     
     reset_token=create_access_token(identity=str(user.id),additional_claims={
         "role":user.role.name,
-        "expires_delta":timedelta(minutes=15)
-    })
+        "purpose": "password_reset",
+    }, expires_delta=timedelta(minutes=15))
     return {
        "reset_token": reset_token
     }
@@ -120,20 +127,12 @@ def password_reset(data:dict):
     new_password=data.get("new_password")
     if not reset_token or not new_password:
         raise BadRequest("Invalid request")
-    #check if the reset token is valid and not expired
-    user_id=None
-   
     try:
         decoded_token=decode_token(reset_token)
-        #get user_id and expires_delta from the decoded token
         user_id=decoded_token.get("sub")
-        expires_delta=decoded_token.get("expires_delta")
-        if not user_id or not expires_delta:
+        if not user_id or decoded_token.get("purpose") != "password_reset":
             raise BadRequest("Invalid reset token")
-        #check if the token is expired
-        if datetime.utcnow()>datetime.utcfromtimestamp(decoded_token.get("exp")):
-            raise BadRequest("Reset token expired")
-    except:
+    except Exception:
         raise BadRequest("Invalid or expired reset token")
     
     user=User.query.get(user_id)

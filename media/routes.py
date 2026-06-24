@@ -1,17 +1,22 @@
 from flask import Blueprint,request
 from utils.api_response import api_response
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from media.services import upload_to_cloudinary
 from media.models import MediaFile
-from extensions import db
+from extensions import db,limiter
 uploads_bp=Blueprint('uploads',__name__)
 
 # @uploads_bp.route('/',methods=['POST'])
 @uploads_bp.route('',methods=['POST'])
+@limiter.limit("30 per hour")
+@jwt_required(locations=['headers'])
 def upload_file():
     """Upload a media file to Cloudinary.
     ---
     tags:
       - Uploads
+    security:
+      - BearerAuth: []
     consumes:
       - multipart/form-data
     parameters:
@@ -35,6 +40,7 @@ def upload_file():
         uploaded= upload_to_cloudinary(file)
         new_media_file=MediaFile(
             submission_id=None,
+            create_by=int(get_jwt_identity()),
             question_name=None,
             filename=uploaded.get("filename"),
             original_filename=uploaded.get("originalName"),

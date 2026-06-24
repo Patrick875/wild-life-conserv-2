@@ -7,10 +7,10 @@ from media.routes import uploads_bp
 from chatbox.routes import chatbox_bp
 from users.routes import users_bp
 from warning_feedbacks.routes import feebacks_bp
-from notificaitions.routes import pusher_bp
+from notifications.routes import pusher_bp
 from warning.routes import warning_bp
 from health.routes import health_bp
-from extensions import db,migrate,jwt
+from extensions import db,migrate,jwt,limiter
 from datetime import timedelta
 from flasgger import Swagger
 from swagger.config import swagger_config
@@ -28,6 +28,7 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app,db)
     jwt.init_app(app)
+    limiter.init_app(app)
   
 
     app.url_map.strict_slashes=False

@@ -40,20 +40,20 @@ def get_current_user():
         message="Current user fetched successfully",
     )
 
-@users_bp.route("/",methods=["GET"])
-def get_app_users():
-    """List application users.
-    ---
-    tags:
-      - Users
-    responses:
-      200:
-        description: All application users fetched successfully.
-    """
-    all_users=get_all_users()
-    return api_response(
-        success=True,
-        data=all_users,
-        status_code=200,
-        message='All users fetched successfuly'
-    )
+# @users_bp.route("/",methods=["GET"])
+# def get_app_users():
+#     """List application users.
+#     ---
+#     tags:
+#       - Users
+#     responses:
+#       200:
+#         description: All application users fetched successfully.
+#     """
+#     all_users=get_all_users()
+#     return api_response(
+#         success=True,
+#         data=all_users,
+#         status_code=200,
+#         message='All users fetched successfuly'
+#     )

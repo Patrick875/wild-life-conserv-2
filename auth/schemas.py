@@ -21,7 +21,7 @@ class SignupSchema(Schema):
         ))
      
 class ForgotPasswordSchema(Schema):
-    email=fields.Email(required=True)
+    identifier=fields.String(required=True)
 
 class PasswordResetSchema(Schema):
     reset_token=fields.String(required=True)

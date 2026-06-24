@@ -4,9 +4,9 @@ from extensions import db
 from sqlalchemy.orm import joinedload
 from extensions import pusher_client
 from users.models import User
-from notificaitions.services import (
+from notifications.services import (
     build_feedback_notification_payload,
-    publish_beams_to_users,
+    
 )
 
 

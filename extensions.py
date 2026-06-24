@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import os 
 import collections
 from collections import abc as collections_abc
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 if not hasattr(collections, "Sized"):
     collections.Sized = collections_abc.Sized
@@ -29,7 +31,12 @@ migrate=Migrate()
 jwt=JWTManager()
 mail=Mail()
 
+limiter=Limiter(
+    key_func=get_remote_address,
+    default_limits=[]
+)
 pusher_client = None
+
 if pusher:
     pusher_client = pusher.Pusher(
         app_id=os.getenv("PUSHER_CHANNELS_APP_ID"),

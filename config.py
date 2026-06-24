@@ -5,7 +5,7 @@ load_dotenv()
 
 class Config():
     PORT=os.getenv('PORT',4800)
-    FLASK_DEBUG=True
+    FLASK_DEBUG=os.getenv("FLASK_DEBUG", "false").lower() == "true"
     SECRET_KEY = os.getenv('SECRET_KEY')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')

@@ -1,4 +1,4 @@
-from flask import jsonify
+from flask import current_app, jsonify
 import time
 
 
@@ -19,6 +19,16 @@ def api_response(
     errors=None,
     status_code: int = 200
 ):
+    if status_code >= 500:
+        current_app.logger.error(
+            "Server error response: %s | details: %s",
+            message,
+            errors,
+            exc_info=True,
+        )
+        message = "An unexpected server error occurred"
+        errors = None
+
     response={
         "success": success,
         "message": message,

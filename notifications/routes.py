@@ -2,7 +2,7 @@ from flask import Blueprint,request
 from flask_jwt_extended import jwt_required,get_jwt_identity
 from utils.api_response import api_response
 from extensions import pusher_client
-from notificaitions.services import (
+from notifications.services import (
     generate_beams_token,
 )
 pusher_bp=Blueprint("pusher_bp",__name__)

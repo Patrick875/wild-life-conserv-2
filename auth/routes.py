@@ -4,9 +4,10 @@ from marshmallow import ValidationError
 from auth.schemas import LoginSchema,SignupSchema,ForgotPasswordSchema,PasswordResetSchema,PasswordResetVerifySchema
 from auth.services import login as login_user,signup_user,forgot_password_init,password_reset_verify,password_reset
 from utils.api_response import api_response
+from extensions import limiter
 
 auth_bp = Blueprint("auth_bp", __name__)
-
+@limiter.limt("10 per minute")
 @auth_bp.route("/login", methods=["POST"])
 def login():
     """
@@ -119,6 +120,7 @@ def signup():
         )
 
 @auth_bp.route("/password-reset/request",methods=["POST"])
+@limiter.limit("10 per hour")
 def forgot_password():
     """
     Forgot Password
@@ -166,6 +168,7 @@ def forgot_password():
         )       
     
 @auth_bp.route("/password-reset/verify",methods=["POST"])
+@limiter.limit("10 per 10 minutes")
 def password_reset_verify_route():
     """
     Verify Password Reset OTP
@@ -206,6 +209,8 @@ def password_reset_verify_route():
         )
 
 @auth_bp.route("/password-reset",methods=["POST"])
+@limiter.limit("10 per 10 minutes")
+
 def password_reset_route():
     """
     Reset Password

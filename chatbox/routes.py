@@ -7,11 +7,13 @@ from chatbox.services import (
     get_chats_per_user_conversation,
 )
 from utils.api_response import api_response
+from extensions import limiter
 
 chatbox_bp = Blueprint("chatbox", __name__)
 
 
 @chatbox_bp.route("/chat", methods=["POST"])
+@limiter.limit("30 per minute")
 @jwt_required(locations=["headers"])
 def chat():
     """Send a message to the Gemini-powered assistant.
