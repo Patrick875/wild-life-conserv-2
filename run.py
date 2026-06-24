@@ -4,14 +4,10 @@ import os
 from flask.cli import with_appcontext
 
 load_dotenv()
-
 #seeders 
-
 from database.seeders.rbac import seed_roles_and_permissions
 from database.seeders.users import seed_admin_user
 from database.seeders.seed import run_seeders
-
-
 
 
 app=create_app()

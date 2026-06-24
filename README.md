@@ -194,10 +194,40 @@ For platforms like Render, make sure all required environment variables are conf
 - `/api/v1/warnings/feedbacks` for warning feedback.
 - `/api/v1/pusher` for Pusher Channels and Beams auth.
 - `/api/v1/ai` for AI chat conversations and messages.
+- `/api/v1/health` and `/api/v1/ready` for liveness and database-readiness checks.
 
-## Notes for Contributors
+## API Documentation
 
-- Keep integration-specific code inside service/helper modules so routes stay thin.
-- Preserve the API response shape from `utils/api_response.py`.
-- Keep AI provider logic behind the chat service boundary so Gemini can remain the default without locking the app to one LLM.
-- Avoid committing secrets or environment-specific values.
+Interactive API documentation is available while the server is running:
+
+```text
+/api/docs
+```
+
+The generated OpenAPI document is served at `/api/docs/swagger.json`. For endpoint contracts, authentication requirements, request examples, and integration notes, see [docs/API.md](docs/API.md).
+
+### Using Swagger UI with JWT authentication
+
+After deployment, open the interactive documentation at:
+
+```text
+https://<your-domain>/api/docs
+```
+
+To test a protected endpoint in Swagger UI:
+
+1. Call `POST /api/v1/auth/login` with a registered user's credentials.
+2. Copy the returned `access_token`.
+3. Select **Authorize** in Swagger UI and enter the full value below in the authorization value field:
+
+   ```text
+   Bearer <access_token>
+   ```
+
+Swagger sends the token in the same header expected by Flask-JWT-Extended:
+
+```http
+Authorization: Bearer <access_token>
+```
+
+Public endpoints, including login, registration, health checks, readiness checks, and Kobo form discovery, do not require a token. Do not share production access tokens in screenshots, issue reports, or public documentation.

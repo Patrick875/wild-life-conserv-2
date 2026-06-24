@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from forms.helpers import *
 from warning.models import Warning
 from warning_feedbacks.models import WarningFeedback
+from werkzeug.exceptions import BadRequest
 from extensions import db
 from sqlalchemy import and_
 
@@ -32,12 +33,12 @@ def get_forms():
         response = requests.get(url, headers=headers, timeout=15)
        
         if not response.ok:
-            raise ValueError(response.text)
+            raise BadRequest(response.text)
         print(response.json())
         return response.json()
         
     except ValueError as error:
-        raise ValueError("Error fetching forms")
+        raise ValueError(f"Error fetching forms {str(error)}")
 
 
 def get_form_by_uuid(uuid:str):
@@ -149,7 +150,7 @@ def submit_warning(form_uuid: str, submission_data: dict,user_id:int):
     print(f'\n\n\n\n this is submission-response {response.json()} \n\n\n\n\n\n ')
     
     if not response.ok:
-        raise ValueError(
+        raise BadRequest(
             f"Kobo submit failed: {response.status_code} {response.text}"
         )
     

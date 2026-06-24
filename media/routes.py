@@ -5,9 +5,29 @@ from media.models import MediaFile
 from extensions import db
 uploads_bp=Blueprint('uploads',__name__)
 
-@uploads_bp.route('/',methods=['POST'])
+# @uploads_bp.route('/',methods=['POST'])
 @uploads_bp.route('',methods=['POST'])
 def upload_file():
+    """Upload a media file to Cloudinary.
+    ---
+    tags:
+      - Uploads
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: file
+        in: formData
+        type: file
+        required: true
+        description: Image, video, or supported document to upload.
+    responses:
+      200:
+        description: File uploaded successfully; returns stored media metadata and Cloudinary URLs.
+      400:
+        description: No file was provided, the type is unsupported, or the file exceeds the allowed size.
+      500:
+        description: The upload provider or media persistence failed.
+    """
     try:
         #upload logic
         file=request.files.get("file")

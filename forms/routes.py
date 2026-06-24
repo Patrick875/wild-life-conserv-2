@@ -6,6 +6,16 @@ forms_bp=Blueprint("forms_bp",__name__)
 
 @forms_bp.route('/',methods=['GET'])
 def get_kobo_forms():
+    """List available KoboToolbox survey forms.
+    ---
+    tags:
+      - Kobo forms
+    responses:
+      200:
+        description: Kobo survey forms fetched successfully.
+      500:
+        description: KoboToolbox could not be reached or returned an error.
+    """
     try:
         forms= get_forms()
         print (forms)
@@ -26,6 +36,22 @@ def get_kobo_forms():
 
 @forms_bp.route('/<uuid>',methods=['GET'])
 def get_form_details(uuid:str):
+    """Get a Kobo form definition for client-side rendering.
+    ---
+    tags:
+      - Kobo forms
+    parameters:
+      - name: uuid
+        in: path
+        type: string
+        required: true
+        description: KoboToolbox asset UID for the survey form.
+    responses:
+      200:
+        description: Form metadata and question definition fetched successfully.
+      500:
+        description: KoboToolbox could not be reached or returned an error.
+    """
     try:
         response=get_form_by_uuid(uuid)
         print("form response",response)
@@ -46,6 +72,26 @@ def get_form_details(uuid:str):
 @forms_bp.route('/<form_uuid>/submissions',methods=['GET'])
 @jwt_required(locations=['headers',])
 def get_submissions_per_form(form_uuid) :
+        """List submissions for a Kobo form.
+        ---
+        tags:
+          - Kobo submissions
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: form_uuid
+            in: path
+            type: string
+            required: true
+            description: KoboToolbox asset UID for the survey form.
+        responses:
+          200:
+            description: Form submissions fetched successfully.
+          401:
+            description: A valid bearer token was not supplied.
+          500:
+            description: KoboToolbox could not be reached or returned an error.
+        """
         try:
             response = get_form_submissions(form_uuid)
 
@@ -68,6 +114,26 @@ def get_submissions_per_form(form_uuid) :
 @forms_bp.route('/<form_uuid>/submissions/me',methods=['GET'])
 @jwt_required(locations=['headers',])
 def get_my_submissions(form_uuid):
+    """List the authenticated user's local submissions for a Kobo form.
+    ---
+    tags:
+      - Kobo submissions
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: form_uuid
+        in: path
+        type: string
+        required: true
+        description: KoboToolbox asset UID for the survey form.
+    responses:
+      200:
+        description: The caller's submissions fetched successfully.
+      401:
+        description: A valid bearer token was not supplied.
+      500:
+        description: Submissions could not be fetched.
+    """
     try:    
             user_id=int(get_jwt_identity())
             response =  get_submissions_by_user(form_id=form_uuid,user_id=user_id)
@@ -93,6 +159,35 @@ def get_my_submissions(form_uuid):
 @jwt_required(locations=['headers','cookies'])
 def submit_data( 
         form_uuid: str ) :
+        """Submit a warning to KoboToolbox and persist its local linkage.
+        ---
+        tags:
+          - Kobo submissions
+        security:
+          - BearerAuth: []
+        consumes:
+          - application/json
+        parameters:
+          - name: form_uuid
+            in: path
+            type: string
+            required: true
+            description: KoboToolbox asset UID for the survey form.
+          - name: body
+            in: body
+            required: true
+            description: Submission fields must match the question names and types in the Kobo form definition.
+            schema:
+              type: object
+              additionalProperties: true
+        responses:
+          200:
+            description: Warning submitted successfully. The response includes local and Kobo submission identifiers.
+          400:
+            description: The payload is invalid or KoboToolbox rejected the submission.
+          401:
+            description: A valid bearer token was not supplied.
+        """
         submission_data=request.json
         try:
             user_id=int(get_jwt_identity())
@@ -118,10 +213,42 @@ def submit_data(
 @forms_bp.route('/<form_uuid>/submissions/<warn_id>',methods=['PUT'])     
 @jwt_required(locations=['headers'])        
 def update_form_submission(
-      
         form_uuid: str, 
         warn_id: str
     ) :
+        """Update an existing Kobo-backed warning submission.
+        ---
+        tags:
+          - Kobo submissions
+        security:
+          - BearerAuth: []
+        consumes:
+          - application/json
+        parameters:
+          - name: form_uuid
+            in: path
+            type: string
+            required: true
+            description: KoboToolbox asset UID for the survey form.
+          - name: warn_id
+            in: path
+            type: string
+            required: true
+            description: Local warning ID or linked Kobo submission ID.
+          - name: body
+            in: body
+            required: true
+            schema:
+              type: object
+              additionalProperties: true
+        responses:
+          203:
+            description: Warning updated successfully.
+          400:
+            description: The update could not be completed.
+          401:
+            description: A valid bearer token was not supplied.
+        """
         
         try:
             response = update_submission(
@@ -146,15 +273,37 @@ def update_form_submission(
             status_code=400
             )
 
-
 @forms_bp.route('/<form_uuid>/submissions/<warn_id>',methods=['DELETE'])   
 @jwt_required(locations=['headers','cookies'])
 def delete_warn(form_uuid: str, warn_id: str) :
+        """Delete an existing Kobo-backed warning submission.
+        ---
+        tags:
+          - Kobo submissions
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: form_uuid
+            in: path
+            type: string
+            required: true
+            description: KoboToolbox asset UID for the survey form.
+          - name: warn_id
+            in: path
+            type: string
+            required: true
+            description: Local warning ID or linked Kobo submission ID.
+        responses:
+          203:
+            description: Warning deleted successfully.
+          400:
+            description: The deletion could not be completed.
+          401:
+            description: A valid bearer token was not supplied.
+        """
         try:
             
             response=delete_submission(form_uuid=form_uuid,submission_id=warn_id)
-            
-            # logger.info(f"Successfully deleted submission {submission_id}")
             return api_response(
             success=True,
             message='Warning deleted successfuly',

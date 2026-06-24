@@ -20,4 +20,17 @@ class SignupSchema(Schema):
             error="Password must be at least 6 characters long and contain at least one letter, one number, and one special character."
         ))
      
-    
+class ForgotPasswordSchema(Schema):
+    email=fields.Email(required=True)
+
+class PasswordResetSchema(Schema):
+    reset_token=fields.String(required=True)
+    new_password=fields.String(required=True, 
+                            validate=validate.Regexp(
+            r"^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{6,}$",
+            error="Password must be at least 6 characters long and contain at least one letter, one number, and one special character."
+        ))
+
+class PasswordResetVerifySchema(Schema):
+    identifier=fields.String(required=True)
+    otp=fields.String(required=True,validate=validate.Length(equal=6))

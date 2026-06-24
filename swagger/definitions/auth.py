@@ -1,0 +1,46 @@
+auth_definitions={
+    "UserLogin":{
+        "type":"object",
+        "required":["identifier","password"],
+        "properties":{
+            "identifier":{"type":"string","description":"email or phone number"},
+            "password":{"type":"string"}
+        }
+    },
+    "UserSignup":{
+        "type":"object",
+        "required":["fullName","phoneNumber","occupation","organization","role","password"],
+        "properties":{
+            "fullName":{"type":"string"},
+            "email":{"type":"string"},
+            "phoneNumber":{"type":"string"},
+            "occupation":{"type":"string"},
+            "organization":{"type":"string"},
+            "role":{"type":"string"},
+            "password":{"type":"string"}
+        }
+    },
+    "ForgotPassword":{
+        "type":"object",
+        "required":["email"],
+        "properties":{
+            "email":{"type":"string"}
+        }
+    },
+   "PasswordResetVerify":{
+       "type":"object",
+       "required":["otp","identifier"],
+       "properties":{
+           "identifier":{"type":"string"},
+           "otp":{"type":"string"}
+       }
+   },
+   "PasswordReset":{
+       "type":"object",
+       "required":["new_password","reset_token"],
+       "properties":{
+           "new_password":{"type":"string"},
+           "reset_token":{"type":"string"}
+       }
+   }
+}

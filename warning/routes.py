@@ -21,6 +21,29 @@ def _current_user():
 @warning_bp.route("/", methods=["GET"])
 @jwt_required(locations=["headers"])
 def list_warnings():
+    """List warnings visible to the authenticated user.
+    ---
+    tags:
+      - Warnings
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: mine
+        in: query
+        type: boolean
+        required: false
+        default: false
+        description: Set to true to return only warnings created by the authenticated user.
+    responses:
+      200:
+        description: Warnings fetched successfully. Users with warning:view:any can see all warnings unless mine is true.
+      401:
+        description: A valid bearer token was not supplied.
+      404:
+        description: The authenticated user no longer exists.
+      500:
+        description: Warnings could not be fetched.
+    """
     try:
         user = _current_user()
         if not user:
@@ -45,6 +68,30 @@ def list_warnings():
 @warning_bp.route("/<int:warning_id>", methods=["GET"])
 @jwt_required(locations=["headers"])
 def get_warning_details(warning_id):
+    """Get one warning, subject to ownership and role permissions.
+    ---
+    tags:
+      - Warnings
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: warning_id
+        in: path
+        type: integer
+        required: true
+        description: Local wildlife warning identifier.
+    responses:
+      200:
+        description: Warning fetched successfully.
+      401:
+        description: A valid bearer token was not supplied.
+      403:
+        description: The caller does not have access to this warning.
+      404:
+        description: The warning or authenticated user was not found.
+      500:
+        description: Warning details could not be fetched.
+    """
     try:
         user = _current_user()
         if not user:
@@ -67,6 +114,39 @@ def get_warning_details(warning_id):
 @warning_bp.route("/<int:warning_id>", methods=["PUT", "PATCH"])
 @jwt_required(locations=["headers"])
 def update_warning_details(warning_id):
+    """Update a local warning record.
+    ---
+    tags:
+      - Warnings
+    security:
+      - BearerAuth: []
+    consumes:
+      - application/json
+    parameters:
+      - name: warning_id
+        in: path
+        type: integer
+        required: true
+        description: Local wildlife warning identifier.
+      - name: body
+        in: body
+        required: true
+        description: Warning fields to update. Only fields supported by the warning service are applied.
+        schema:
+          type: object
+          additionalProperties: true
+    responses:
+      200:
+        description: Warning updated successfully.
+      401:
+        description: A valid bearer token was not supplied.
+      403:
+        description: The caller does not have permission to update this warning.
+      404:
+        description: The warning or authenticated user was not found.
+      500:
+        description: Warning could not be updated.
+    """
     try:
         user = _current_user()
         if not user:
@@ -90,6 +170,30 @@ def update_warning_details(warning_id):
 @warning_bp.route("/<int:warning_id>", methods=["DELETE"])
 @jwt_required(locations=["headers"])
 def delete_warning_details(warning_id):
+    """Delete a local warning record.
+    ---
+    tags:
+      - Warnings
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: warning_id
+        in: path
+        type: integer
+        required: true
+        description: Local wildlife warning identifier.
+    responses:
+      200:
+        description: Warning deleted successfully.
+      401:
+        description: A valid bearer token was not supplied.
+      403:
+        description: The caller does not have permission to delete this warning.
+      404:
+        description: The warning or authenticated user was not found.
+      500:
+        description: Warning could not be deleted.
+    """
     try:
         user = _current_user()
         if not user:

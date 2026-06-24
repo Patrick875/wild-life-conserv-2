@@ -25,6 +25,8 @@ class User(BaseModel):
     password_reset_expires = db.Column(db.DateTime, nullable=True)
 
     last_login = db.Column(db.DateTime)
+    reset_password_otp= db.Column(db.String(6), nullable=True)
+    reset_password_otp_expires=db.Column(db.DateTime,nullable=True)
 
     submissions = db.relationship("FormSubmission", back_populates="user")
     uploads=db.relationship("MediaFile",back_populates="user")

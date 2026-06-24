@@ -10,6 +10,39 @@ pusher_bp=Blueprint("pusher_bp",__name__)
 @pusher_bp.route('/auth',methods=["POST"])
 @jwt_required(locations=["headers"])
 def pusher_authentication():
+    """Authorize a Pusher Channels private-user subscription.
+    ---
+    tags:
+      - Realtime notifications
+    security:
+      - BearerAuth: []
+    consumes:
+      - application/x-www-form-urlencoded
+    parameters:
+      - name: channel_name
+        in: formData
+        type: string
+        required: true
+        description: Must equal private-user-{authenticated_user_id}.
+        example: private-user-42
+      - name: socket_id
+        in: formData
+        type: string
+        required: true
+        description: Pusher socket ID supplied by the client SDK.
+        example: 1234.5678
+    responses:
+      200:
+        description: Pusher authentication signature generated successfully.
+      400:
+        description: channel_name or socket_id is missing.
+      401:
+        description: A valid bearer token was not supplied.
+      403:
+        description: The caller attempted to authorize another user's private channel.
+      503:
+        description: Pusher Channels is not configured.
+    """
     current_user_id = get_jwt_identity()
     
     channel_name = request.form.get("channel_name")

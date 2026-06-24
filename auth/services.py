@@ -1,9 +1,13 @@
+from nacl.utils import random
 from users.models import User
 from auth.models import Role
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token,get_jwt_identity,decode_token
 from werkzeug.security import check_password_hash,generate_password_hash
+from werkzeug.exceptions import BadRequest,NotFound
 from sqlalchemy import or_
 from extensions import db
+from datetime import datetime,timedelta
+from utils.email_service import send_email
 
 def login(data: dict):
     identifier = data["identifier"]
@@ -69,3 +73,84 @@ def signup_user(data:dict):
         "user_id":user.to_dict()["id"],
     }
     
+def forgot_password_init(data:dict):
+    identifier=data.get("identifier");
+    user=User.query.filter(or_(User.email==identifier,User.phone_number==identifier)).first()
+    if not user:
+        raise NotFound("User not found")
+    reset_password_otp=str(random.randint(100000,999999))
+    user.reset_password_otp=reset_password_otp
+    user.reset_password_otp_expires=datetime.utcnow()+timedelta(minutes=10)
+    
+    send_email(
+        subject="Password Reset OTP",
+        recipients=[user.email],
+        template="reset_password_otp",
+        values={
+            "full_name": user.full_name,
+            "otp": reset_password_otp
+        }
+    )
+    return {
+        "message":"Password reset OTP sent to your email",
+        "expires_at":user.reset_password_otp_expires
+    }
+
+def password_reset_verify(data:dict):
+    identifier=data.get("identifier")
+    otp=data.get("otp")
+    user=User.query.filter(or_(User.email==identifier,User.phone_number==identifier)).first()
+    if not user:
+        raise NotFound("User not found")
+    if user.reset_password_otp!=otp:
+        raise BadRequest("Invalid OTP")
+    if user.reset_password_otp_expires<datetime.utcnow():
+        raise BadRequest("OTP expired")
+    
+    reset_token=create_access_token(identity=str(user.id),additional_claims={
+        "role":user.role.name,
+        "expires_delta":timedelta(minutes=15)
+    })
+    return {
+       "reset_token": reset_token
+    }
+
+def password_reset(data:dict):
+    reset_token=data.get("reset_token")
+    new_password=data.get("new_password")
+    if not reset_token or not new_password:
+        raise BadRequest("Invalid request")
+    #check if the reset token is valid and not expired
+    user_id=None
+   
+    try:
+        decoded_token=decode_token(reset_token)
+        #get user_id and expires_delta from the decoded token
+        user_id=decoded_token.get("sub")
+        expires_delta=decoded_token.get("expires_delta")
+        if not user_id or not expires_delta:
+            raise BadRequest("Invalid reset token")
+        #check if the token is expired
+        if datetime.utcnow()>datetime.utcfromtimestamp(decoded_token.get("exp")):
+            raise BadRequest("Reset token expired")
+    except:
+        raise BadRequest("Invalid or expired reset token")
+    
+    user=User.query.get(user_id)
+    if not user:
+        raise NotFound("User not found")
+    user.password_hash=generate_password_hash(new_password)
+    user.reset_password_otp=None
+    user.reset_password_otp_expires=None
+    send_email(
+        subject='Password Reset Successful',
+        email_template='password_reset_success',
+        recipients=[user.email],
+        values={
+            "full_name": user.full_name,
+        }
+        )
+    db.session.commit()
+    return {
+        "message":"Password reset successful"
+    }
