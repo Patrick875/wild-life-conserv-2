@@ -67,7 +67,7 @@ def chat():
             mode="with_history",
             conversation_id=conversation_id,
         )
-        print("ai-response",response)
+       
         return api_response(
             success=True,
             message="Message sent successfully",

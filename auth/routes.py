@@ -7,8 +7,9 @@ from utils.api_response import api_response
 from extensions import limiter
 
 auth_bp = Blueprint("auth_bp", __name__)
-@limiter.limt("10 per minute")
+
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("10 per minute")
 def login():
     """
     Login
@@ -105,6 +106,7 @@ def signup():
         )
     
     except ValidationError as error:
+        print(error.messages)
         return api_response(
             success=False,
             message="Validation failed",

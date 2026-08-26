@@ -28,7 +28,7 @@ def parse_form_content(form_data: dict):
                 'form_name': form_data.get('name', ''),
                 'form_title': get_label(content.get('settings', {})),
                 'questions': questions,
-                'submission_url': f"/api/v1/submissions/",
+                'submission_url': f"/submission",
                 'created_at': form_data.get('date_created'),
                 'modified_at': form_data.get('date_modified'),
                 'deployment_status': form_data.get('deployment__active', False),
@@ -368,4 +368,3 @@ def build_submission_dict(submission_data: dict) -> dict:
     submission.setdefault("meta", {})["instanceID"] = raw_uuid
 
     return submission
-

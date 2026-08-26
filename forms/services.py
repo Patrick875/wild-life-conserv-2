@@ -1,5 +1,7 @@
 import requests
 import os
+import json
+import xml.etree.ElementTree as ET
 from dotenv import load_dotenv
 from forms.helpers import *
 from warning.models import Warning
@@ -19,11 +21,46 @@ headers = {
         "Content-Type": "application/json"
 }
 
+def get_kobo_kpi_base_url():
+    """Kobo v2 endpoints live on KPI, which uses kf instead of the old kc host."""
+    base_url = (KOBO_BASE_URL or "https://kf.kobotoolbox.org").rstrip("/")
+    if "://kc." in base_url:
+        return base_url.replace("://kc.", "://kf.", 1)
+    return base_url
+
+def append_submission_xml(parent, key, value):
+    child = ET.SubElement(parent, key)
+
+    if isinstance(value, dict):
+        for child_key, child_value in value.items():
+            append_submission_xml(child, child_key, child_value)
+        return
+
+    if isinstance(value, list):
+        child.text = json.dumps(value)
+        return
+
+    child.text = "" if value is None else str(value)
+
+def build_openrosa_xml(form_uuid: str, submission: dict, form_data=None):
+    content = (form_data or {}).get("content", {})
+    settings = content.get("settings", {})
+    root_name = settings.get("id_string") or (form_data or {}).get("uid") or form_uuid
+    formhub_uuid = (form_data or {}).get("deployment__uuid") or form_uuid
+
+    submission["formhub"] = {"uuid": formhub_uuid}
+
+    root = ET.Element(root_name)
+    for key, value in submission.items():
+        append_submission_xml(root, key, value)
+
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True)
+
 def get_forms():
     try:
        
         KOBO_TOKEN=os.getenv("KOBO_API_TOKEN")
-        url = f"{KOBO_BASE_URL}/api/v2/assets/?asset_type=survey"
+        url = f"{get_kobo_kpi_base_url()}/api/v2/assets/?asset_type=survey"
 
         headers = {
                 "Authorization": f"Token {KOBO_TOKEN}",
@@ -44,9 +81,8 @@ def get_forms():
 def get_form_by_uuid(uuid:str):
     
     try:
-        KOBO_BASE_URL= os.getenv("KOBO_SERVER_URL")
-        # response=make_kobo_request(method='GET',url=KOBO_BASE_URL+"/api/v2/assets/"+uuid)
-        response=requests.get(KOBO_BASE_URL+"/api/v2/assets/"+uuid,headers=headers,timeout=kobo_timeout)
+        # response=make_kobo_request(method='GET',url=get_kobo_kpi_base_url()+"/api/v2/assets/"+uuid)
+        response=requests.get(get_kobo_kpi_base_url()+"/api/v2/assets/"+uuid,headers=headers,timeout=kobo_timeout)
         print("form response",response)
         return response.json()
         
@@ -83,7 +119,7 @@ def get_form_submissions(
                 "format": "json"
             }
             
-            response=requests.get(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/data",headers=headers,timeout=kobo_timeout)
+            response=requests.get(get_kobo_kpi_base_url()+"/api/v2/assets/"+form_uid+"/data",headers=headers,timeout=kobo_timeout)
             submissions = Warning.query.order_by(Warning.created_at.desc()).filter_by(kobo_form_id=form_uid).all()
             
             submissions_normalized=[submission.to_dict(include_feedbacks=True) for submission in submissions] or []
@@ -108,23 +144,12 @@ def get_submissions_by_user(form_id:int,user_id:int):
 
 def submit_warning(form_uuid: str, submission_data: dict,user_id:int):
     """
-    xml_form_id : the form's id_string  (e.g. "aXxYyZz123")
-                  GET https://kc.kobotoolbox.org/api/v1/forms?format=json
-                  and find  "id_string"  for your form.
-
-    form_uuid   : the form-level UUID   (e.g. "f739945244514a6bb304dc35d6049880")
-                  same endpoint, field  "uuid".
-                  This is NOT the submission UUID — it identifies the form schema.
+    form_uuid is the Kobo asset uid used by the KPI v2 API.
     """
     submission = build_submission_dict(submission_data)
-
-    # Inject formhub/uuid — required by KoboCAT to route the submission
-    submission["formhub"] = {"uuid": form_uuid}
-
-    payload = {
-        "id": form_uuid,
-        "submission": submission,
-    }
+    form_data = get_form_by_uuid(form_uuid)
+    submission_xml = build_openrosa_xml(form_uuid, submission, form_data)
+    submitted_instance_id = submission.get("meta", {}).get("instanceID", "")
 
     warning=Warning(
         kobo_form_id = form_uuid,
@@ -137,31 +162,59 @@ def submit_warning(form_uuid: str, submission_data: dict,user_id:int):
 
     submit_headers = {
         "Authorization": headers.get("Authorization"),
-        "Content-Type": "application/json",
     }
 
     response = requests.post(
-        f"{KOBO_BASE_URL}/api/v1/submissions",  # must be kc. subdomain, not kf.
+        f"{get_kobo_kpi_base_url()}/submission",
         headers=submit_headers,
-        json=payload,
+        files={
+            "xml_submission_file": (
+                "submission.xml",
+                submission_xml,
+                "text/xml",
+            )
+        },
         timeout=30,
     )
 
-    print(f'\n\n\n\n this is submission-response {response.json()} \n\n\n\n\n\n ')
-    
+    response_text = response.text or ""
+    try:
+        kobo_response = response.json() if response_text.strip() else {}
+    except ValueError:
+        kobo_response = {}
+
+    print(f'\n\n\n\n this is submission-response {response.status_code} {response_text} \n\n\n\n\n\n ')
+
     if not response.ok:
         raise BadRequest(
-            f"Kobo submit failed: {response.status_code} {response.text}"
+            f"Kobo submit failed: {response.status_code} {response_text or response.reason}"
         )
-    
-    kobo_response=response.json()
-    submission_id=kobo_response.get("instanceID").replace("uuid:","")
+
+    submission_id = str(
+        kobo_response.get("instanceID")
+        or kobo_response.get("uuid")
+        or kobo_response.get("_uuid")
+        or kobo_response.get("root_uuid")
+        or kobo_response.get("uid")
+        or kobo_response.get("_id")
+        or submitted_instance_id
+        or ""
+    ).replace("uuid:", "")
+    if not submission_id:
+        raise BadRequest(f"Kobo submit response missing instanceID: {response_text}")
     warning.status='submitted'
     warning.kobo_submission_id=submission_id
     
     db.session.commit()
 
-    return response.json() if response.text else {"success": True}
+    if kobo_response:
+        return kobo_response
+
+    return {
+        "success": True,
+        "instanceID": submitted_instance_id,
+        "kobo_response": response_text,
+    }
 
 def update_submission(
       
@@ -178,7 +231,7 @@ def update_submission(
             # )
             warning = Warning.query.filter_by(id=submission_id, kobo_form_id=form_uid).first()
             kobo_submission_id = warning.kobo_submission_id if warning else submission_id
-            response=requests.put(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+kobo_submission_id,headers=headers,timeout=kobo_timeout,json=submission_data)
+            response=requests.put(get_kobo_kpi_base_url()+"/api/v2/assets/"+form_uid+"/data/"+kobo_submission_id,headers=headers,timeout=kobo_timeout,json=submission_data)
             if not response.ok:
                 raise ValueError(response.text)
 
@@ -205,7 +258,7 @@ def delete_submission(
             # )
             warning = Warning.query.filter_by(id=submission_id, kobo_form_id=form_uid).first()
             kobo_submission_id = warning.kobo_submission_id if warning else submission_id
-            response = requests.delete(KOBO_BASE_URL+"/api/v2/assets/"+form_uid+"/submissions/"+kobo_submission_id,headers=headers,timeout=kobo_timeout)
+            response = requests.delete(get_kobo_kpi_base_url()+"/api/v2/assets/"+form_uid+"/data/"+kobo_submission_id,headers=headers,timeout=kobo_timeout)
             if not response.ok:
                 raise ValueError(response.text)
 
