@@ -3,26 +3,39 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+def get_database_uri():
+    database_uri = os.getenv('SQLALCHEMY_DATABASE_URI') or os.getenv('DATABASE_URL')
+
+    if not database_uri:
+        return database_uri
+
+    database_uri = database_uri.replace(
+        'postgresql.pyscopg2', 'postgresql+psycopg2'
+    ).replace(
+        'postgresql.pyscopy2', 'postgresql+psycopg2'
+    ).replace(
+        'postgres://', 'postgresql+psycopg2://', 1
+    )
+
+    is_render_external_url = 'render.com' in database_uri and '-postgres.render.com' in database_uri
+    ssl_requested = os.getenv('DATABASE_SSL', '').lower() == 'true'
+
+    if 'sslmode=' not in database_uri and (ssl_requested or is_render_external_url):
+        separator = '&' if '?' in database_uri else '?'
+        database_uri = f'{database_uri}{separator}sslmode=require'
+
+    return database_uri
+
 class Config():
     PORT=os.getenv('PORT',4800)
     FLASK_DEBUG=os.getenv("FLASK_DEBUG", "false").lower() == "true"
     SECRET_KEY = os.getenv('SECRET_KEY')
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.getenv('SQLALCHEMY_DATABASE_URI')
-    # if SQLALCHEMY_DATABASE_URI:
-    #     SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
-    #         'postgresql.pyscopg2', 'postgresql+psycopg2'
-    #     ).replace(
-    #         'postgresql.pyscopy2', 'postgresql+psycopg2'
-    #     )
-    #     if 'sslmode=' not in SQLALCHEMY_DATABASE_URI and os.getenv('DATABASE_SSL') == 'true':
-    #         sep = '&' if '?' in SQLALCHEMY_DATABASE_URI else '?'
-    #         SQLALCHEMY_DATABASE_URI += f'{sep}sslmode=require'
-    # SQLALCHEMY_ENGINE_OPTIONS = {
-    #     'connect_args': {
-    #         'sslmode': 'require'
-    #     }
-    # }
+    SQLALCHEMY_DATABASE_URI = get_database_uri()
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
     JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')
     JWT_COOKIE_SECURE = False 
