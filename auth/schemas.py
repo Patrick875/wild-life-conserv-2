@@ -9,7 +9,7 @@ class SignupSchema(Schema):
      email=fields.Email()
      phoneNumber=fields.String(required=True,validate=validate.Regexp(
             r"^\d{8,14}$",
-            error="Phone number must consist only of numbers and be between 8 and 14 digits long."
+            error="Phone number must include the country code and contain 8 to 14 digits."
         ))
      occupation=fields.String(required=True)
      organization=fields.String(required=True)
