@@ -9,6 +9,12 @@ def get_database_uri():
     if not database_uri:
         return database_uri
 
+    if database_uri.startswith(('redis://', 'rediss://')):
+        raise ValueError(
+            'SQLALCHEMY_DATABASE_URI/DATABASE_URL must be a PostgreSQL URL. '
+            'Put your Render Redis URL in REDIS_URL instead.'
+        )
+
     database_uri = database_uri.replace(
         'postgresql.pyscopg2', 'postgresql+psycopg2'
     ).replace(
@@ -26,6 +32,12 @@ def get_database_uri():
 
     return database_uri
 
+def database_needs_ssl():
+    database_uri = get_database_uri() or ''
+    is_render_external_url = 'render.com' in database_uri and '-postgres.render.com' in database_uri
+    ssl_requested = os.getenv('DATABASE_SSL', '').lower() == 'true'
+    return ssl_requested or is_render_external_url
+
 class Config():
     PORT=os.getenv('PORT',4800)
     FLASK_DEBUG=os.getenv("FLASK_DEBUG", "false").lower() == "true"
@@ -36,11 +48,17 @@ class Config():
         'pool_pre_ping': True,
         'pool_recycle': 300,
     }
+    if database_needs_ssl():
+        SQLALCHEMY_ENGINE_OPTIONS['connect_args'] = {
+            'sslmode': 'require',
+        }
     JWT_TOKEN_LOCATION = os.getenv('JWT_TOKEN_LOCATION')
     JWT_REFRESH_COOKIE_NAME = os.getenv('JWT_REFRESH_COOKIE_NAME')
     JWT_COOKIE_SECURE = False 
     JWT_COOKIE_SAMESITE = os.getenv('JWT_COOKIE_SAMESITE')
     JWT_COOKIE_CSRF_PROTECT = True
+    REDIS_URL = os.getenv('REDIS_URL')
+    RATELIMIT_STORAGE_URI = REDIS_URL
     EMAIL_VERIFICATION_SALT = os.getenv('EMAIL_VERIFICATION_SALT')
     KOBO_TIMEOUT=os.getenv('KOBO_TIMEOUT')
     KOBO_API_TOKEN=os.getenv('KOBO_API_TOKEN')
